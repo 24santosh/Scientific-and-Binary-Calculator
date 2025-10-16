@@ -28,7 +28,7 @@
             font-weight: 500;
             color: white;
         }
-        .btn:active {
+        .btn:active, .btn.active {
             transform: translateY(2px);
             box-shadow: 2px 2px 5px #161616, -2px -2px 5px #242424, inset 3px 3px 6px #161616, inset -3px -3px 6px #242424;
         }
@@ -39,28 +39,11 @@
             box-shadow: 5px 5px 10px #161616, -5px -5px 10px #242424;
             color: #fff;
         }
-         .btn-equals:active {
+         .btn-equals:active, .btn-equals.active {
             background: linear-gradient(145deg, #1f1f1f, #282828);
             box-shadow: 2px 2px 5px #161616, -2px -2px 5px #242424, inset 3px 3px 6px #161616, inset -3px -3px 6px #242424;
         }
         
-        /* Rainbow Colors (Unused but kept for reference) */
-        .btn-red { background: linear-gradient(145deg, #7f1d1d, #6b1919); box-shadow: 4px 4px 8px #0e0e0e, -4px -4px 8px #282828; color: white;}
-        .btn-red:active { background: linear-gradient(145deg, #6b1919, #7f1d1d); }
-        .btn-orange { background: linear-gradient(145deg, #9a3412, #832c0e); box-shadow: 4px 4px 8px #0e0e0e, -4px -4px 8px #282828; color: white; }
-        .btn-orange:active { background: linear-gradient(145deg, #832c0e, #9a3412); }
-        .btn-yellow { background: linear-gradient(145deg, #b45309, #9a4708); box-shadow: 4px 4px 8px #0e0e0e, -4px -4px 8px #282828; color: white; }
-        .btn-yellow:active { background: linear-gradient(145deg, #9a4708, #b45309); }
-        .btn-green { background: linear-gradient(145deg, #166534, #13562c); box-shadow: 4px 4px 8px #0e0e0e, -4px -4px 8px #282828; color: white; }
-        .btn-green:active { background: linear-gradient(145deg, #13562c, #166534); }
-        .btn-blue { background: linear-gradient(145deg, #1e40af, #1a3694); box-shadow: 4px 4px 8px #0e0e0e, -4px -4px 8px #282828; color: white; }
-        .btn-blue:active { background: linear-gradient(145deg, #1a3694, #1e40af); }
-        .btn-indigo { background: linear-gradient(145deg, #5b21b6, #4d1c99); box-shadow: 4px 4px 8px #0e0e0e, -4px -4px 8px #282828; color: white; }
-        .btn-indigo:active { background: linear-gradient(145deg, #4d1c99, #5b21b6); }
-        .btn-violet { background: linear-gradient(145deg, #86198f, #72157a); box-shadow: 4px 4px 8px #0e0e0e, -4px -4px 8px #282828; color: white; }
-        .btn-violet:active { background: linear-gradient(145deg, #72157a, #86198f); }
-
-
         .toggle-switch { position: relative; display: inline-block; width: 100px; height: 34px; }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
@@ -201,15 +184,17 @@
                 if (number === null || number === undefined) return '';
                 const stringNumber = number.toString();
                 if (stringNumber.length > 15 && !isBinaryMode) {
-                    return parseFloat(stringNumber).toExponential(9);
+                    try {
+                        return parseFloat(stringNumber).toExponential(9);
+                    } catch {
+                        return 'Error';
+                    }
                 }
                 return stringNumber;
             }
 
             const handleNumber = (number) => {
                 if (currentInput === '0' || currentInput === 'Error') currentInput = '';
-                // In binary mode, if the input is not a binary digit, we assume it's for conversion.
-                // But we still build the string. The user needs to press DEC->BIN.
                 currentInput += number;
             };
 
@@ -308,7 +293,7 @@
             };
 
             const decToBin = (dec) => {
-                if (isNaN(dec)) return 'Error';
+                if (isNaN(parseFloat(dec))) return 'Error';
                 const num = parseFloat(dec);
                 const integerPart = Math.floor(Math.abs(num));
                 let fractionalPart = Math.abs(num) - integerPart;
@@ -328,7 +313,10 @@
             };
 
             const binToDec = (bin) => {
-                if (typeof bin !== 'string' || !/^[01.-]+$/.test(bin)) return 'Error';
+                if (typeof bin !== 'string' || !/^-?[01]*\.?[01]*$/.test(bin) || bin === '.' || bin === '-') return 'Error';
+                const isNegative = bin.startsWith('-');
+                if(isNegative) bin = bin.substring(1);
+
                 const parts = bin.split('.');
                 const integerPart = parts[0];
                 const fractionalPart = parts[1] || '';
@@ -339,7 +327,7 @@
                         if (fractionalPart[i] === '1') decimalValue += Math.pow(2, -(i + 1));
                     }
                 }
-                return decimalValue.toString();
+                return (isNegative ? -1 : 1) * decimalValue;
             };
             
             const handleBinaryOperation = (op) => {
@@ -350,8 +338,14 @@
 
             const calculateBinary = () => {
                 if (!previousInput || !currentInput) return;
-                const prevDec = parseFloat(binToDec(previousInput));
-                const currentDec = parseFloat(binToDec(currentInput));
+                const prevDec = binToDec(previousInput);
+                const currentDec = binToDec(currentInput);
+
+                if(prevDec === 'Error' || currentDec === 'Error') {
+                    currentInput = 'Error';
+                    return;
+                }
+
                 let resultDec;
                 switch(operation) {
                     case '+': resultDec = prevDec + currentDec; break;
@@ -363,7 +357,7 @@
                         break;
                     default: return;
                 }
-                currentInput = decToBin(resultDec);
+                currentInput = decToBin(resultDec.toString());
                 operation = undefined;
                 previousInput = '';
             }
@@ -389,7 +383,7 @@
                         case 'clear-bin': clear(); break;
                         case 'delete-bin': deleteLast(); break;
                         case 'bin-to-dec':
-                            if (currentInput !== 'Error' && currentInput !== '0') currentInput = binToDec(currentInput);
+                            if (currentInput !== 'Error' && currentInput !== '0') currentInput = binToDec(currentInput).toString();
                             break;
                         case 'dec-to-bin':
                              if (currentInput !== 'Error' && currentInput !== '0') currentInput = decToBin(currentInput);
@@ -407,19 +401,18 @@
                         case 'divide': expression += '÷'; handleOperation('÷'); break;
                         case 'power-y': expression += '**'; handleOperation('xʸ'); break;
                         case 'equals':
-                            if (expression.includes('(') || expression.includes(')')) {
-                                let result = evaluateExpression(expression);
-                                currentInput = result.toString();
-                                expression = currentInput;
-                            } else if (operation) {
+                            if (operation) {
                                 calculate();
+                                expression = currentInput;
+                            } else if (expression) {
+                                currentInput = evaluateExpression(expression).toString();
                                 expression = currentInput;
                             }
                             operation = undefined; previousInput = '';
                             break;
                         case 'clear': clear(); break;
                         case 'delete': deleteLast(); if(expression.length > 0) expression = expression.slice(0, -1); break;
-                        case 'percent': currentInput = (parseFloat(currentInput) / 100).toString(); expression += '/100'; break;
+                        case 'percent': currentInput = (parseFloat(currentInput) / 100).toString(); expression = currentInput; break;
                         case 'pi': currentInput = Math.PI.toString(); expression += 'π'; break;
                         case 'e': currentInput = Math.E.toString(); expression += 'e'; break;
                         case 'open-parenthesis': expression += '('; currentInput = expression; break;
@@ -462,6 +455,45 @@
                     binLabel.classList.add('opacity-50'); binLabel.classList.remove('font-bold', 'text-white');
                 }
             });
+            
+            // --- KEYBOARD SUPPORT ---
+            window.addEventListener('keydown', (e) => {
+                const key = e.key;
+                let buttonToClick = null;
+
+                // Find the visible button container
+                const visibleButtons = isBinaryMode ? binaryButtons : decimalButtons;
+
+                if (key >= '0' && key <= '9') {
+                    // Find the number button by its text content within the visible container
+                    buttonToClick = Array.from(visibleButtons.querySelectorAll('[data-action="number"]')).find(btn => btn.textContent === key);
+                } else if (key === '.') {
+                    buttonToClick = visibleButtons.querySelector('[data-action="decimal"]');
+                } else if (key === 'Enter' || key === '=') {
+                    buttonToClick = visibleButtons.querySelector(isBinaryMode ? '[data-action="equals-bin"]' : '[data-action="equals"]');
+                } else if (key === 'Backspace') {
+                    buttonToClick = visibleButtons.querySelector(isBinaryMode ? '[data-action="delete-bin"]' : '[data-action="delete"]');
+                } else if (key === 'Escape') {
+                    buttonToClick = visibleButtons.querySelector(isBinaryMode ? '[data-action="clear-bin"]' : '[data-action="clear"]');
+                } else if (key === '+') {
+                    buttonToClick = visibleButtons.querySelector(isBinaryMode ? '[data-action="add-bin"]' : '[data-action="add"]');
+                } else if (key === '-') {
+                    buttonToClick = visibleButtons.querySelector(isBinaryMode ? '[data-action="subtract-bin"]' : '[data-action="subtract"]');
+                } else if (key === '*') {
+                    buttonToClick = visibleButtons.querySelector(isBinaryMode ? '[data-action="multiply-bin"]' : '[data-action="multiply"]');
+                } else if (key === '/') {
+                    e.preventDefault(); // Prevent browser's quick find
+                    buttonToClick = visibleButtons.querySelector(isBinaryMode ? '[data-action="divide-bin"]' : '[data-action="divide"]');
+                }
+
+                if (buttonToClick) {
+                    buttonToClick.click();
+                    // Visual feedback for keyboard press
+                    buttonToClick.classList.add('active');
+                    setTimeout(() => buttonToClick.classList.remove('active'), 100);
+                }
+            });
+
             updateDisplay();
         });
     </script>
