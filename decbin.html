@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scientific & Binary Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .calculator-body {
+            background: linear-gradient(145deg, #1e1e1e, #181818);
+            box-shadow: 10px 10px 20px #141414, -10px -10px 20px #222222;
+        }
+        .display {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(145deg, #1a1a1a, #1f1f1f);
+            box-shadow: inset 7px 7px 14px #161616, inset -7px -7px 14px #242424;
+            text-shadow: 0 0 5px rgba(132, 255, 203, 0.2);
+        }
+        .btn {
+            background: linear-gradient(145deg, #1f1f1f, #1a1a1a);
+            box-shadow: 5px 5px 10px #161616, -5px -5px 10px #242424;
+            transition: all 0.1s ease-in-out;
+            font-weight: 500;
+            color: white;
+        }
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 2px 2px 5px #161616, -2px -2px 5px #242424, inset 3px 3px 6px #161616, inset -3px -3px 6px #242424;
+        }
+        .btn-special { color: #84ffcb; }
+        .btn-operator { color: #ff9d84; }
+        .btn-equals {
+            background: linear-gradient(145deg, #282828, #1f1f1f);
+            box-shadow: 5px 5px 10px #161616, -5px -5px 10px #242424;
+            color: #fff;
+        }
+         .btn-equals:active {
+            background: linear-gradient(145deg, #1f1f1f, #282828);
+            box-shadow: 2px 2px 5px #161616, -2px -2px 5px #242424, inset 3px 3px 6px #161616, inset -3px -3px 6px #242424;
+        }
+        
+        /* Rainbow Colors (Unused but kept for reference) */
+        .btn-red { background: linear-gradient(145deg, #7f1d1d, #6b1919); box-shadow: 4px 4px 8px #0e0e0e, -4px -4px 8px #282828; color: white;}
+        .btn-red:active { background: linear-gradient(145deg, #6b1919, #7f1d1d); }
+        .btn-orange { background: linear-gradient(145deg, #9a3412, #832c0e); box-shadow: 4px 4px 8px #0e0e0e, -4px -4px 8px #282828; color: white; }
+        .btn-orange:active { background: linear-gradient(145deg, #832c0e, #9a3412); }
+        .btn-yellow { background: linear-gradient(145deg, #b45309, #9a4708); box-shadow: 4px 4px 8px #0e0e0e, -4px -4px 8px #282828; color: white; }
+        .btn-yellow:active { background: linear-gradient(145deg, #9a4708, #b45309); }
+        .btn-green { background: linear-gradient(145deg, #166534, #13562c); box-shadow: 4px 4px 8px #0e0e0e, -4px -4px 8px #282828; color: white; }
+        .btn-green:active { background: linear-gradient(145deg, #13562c, #166534); }
+        .btn-blue { background: linear-gradient(145deg, #1e40af, #1a3694); box-shadow: 4px 4px 8px #0e0e0e, -4px -4px 8px #282828; color: white; }
+        .btn-blue:active { background: linear-gradient(145deg, #1a3694, #1e40af); }
+        .btn-indigo { background: linear-gradient(145deg, #5b21b6, #4d1c99); box-shadow: 4px 4px 8px #0e0e0e, -4px -4px 8px #282828; color: white; }
+        .btn-indigo:active { background: linear-gradient(145deg, #4d1c99, #5b21b6); }
+        .btn-violet { background: linear-gradient(145deg, #86198f, #72157a); box-shadow: 4px 4px 8px #0e0e0e, -4px -4px 8px #282828; color: white; }
+        .btn-violet:active { background: linear-gradient(145deg, #72157a, #86198f); }
+
+
+        .toggle-switch { position: relative; display: inline-block; width: 100px; height: 34px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: #84ffcb; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #333; }
+        input:checked + .slider:before { transform: translateX(66px); }
+    </style>
+</head>
+<body class="bg-black flex items-center justify-center min-h-screen p-4">
+
+    <div class="calculator-body w-full max-w-sm lg:max-w-md p-4 rounded-3xl">
+
+        <!-- Display -->
+        <div class="display w-full h-28 rounded-2xl mb-4 p-4 text-right text-4xl text-gray-200 overflow-x-auto overflow-y-hidden break-all flex flex-col justify-end">
+            <div id="previous-operand" class="text-xl text-gray-400 opacity-70"></div>
+            <div id="current-operand" class="text-4xl">0</div>
+        </div>
+
+        <!-- Mode Toggle -->
+        <div class="flex justify-center items-center mb-4 space-x-3 text-sm text-gray-300">
+            <span id="dec-label" class="font-bold text-white">DEC</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="mode-toggle">
+                <span class="slider"></span>
+            </label>
+            <span id="bin-label" class="opacity-50">BIN</span>
+        </div>
+
+        <!-- Buttons Grid -->
+        <div id="buttons-container" class="grid grid-cols-5 gap-2 md:gap-3">
+            <!-- Decimal/Scientific Mode Buttons -->
+            <div id="decimal-buttons" class="contents">
+                 <button class="btn btn-special" data-action="deg-rad">RAD</button>
+                 <button class="btn btn-special" data-action="inv">Inv</button>
+                 <button class="btn btn-special" data-action="sin">sin</button>
+                 <button class="btn btn-special" data-action="cos">cos</button>
+                 <button class="btn btn-special" data-action="tan">tan</button>
+
+                 <button class="btn btn-special" data-action="ln">ln</button>
+                 <button class="btn btn-special" data-action="log">log</button>
+                 <button class="btn btn-special" data-action="factorial">n!</button>
+                 <button class="btn btn-special" data-action="pi">&pi;</button>
+                 <button class="btn btn-special" data-action="e">e</button>
+
+                 <button class="btn btn-special" data-action="power-2">x²</button>
+                 <button class="btn btn-special" data-action="power-y">xʸ</button>
+                 <button class="btn btn-special" data-action="sqrt">√</button>
+                 <button class="btn btn-special" data-action="open-parenthesis">(</button>
+                 <button class="btn btn-special" data-action="close-parenthesis">)</button>
+
+                 <button class="btn btn-operator" data-action="clear">AC</button>
+                 <button class="btn btn-operator" data-action="delete">DEL</button>
+                 <button class="btn btn-operator" data-action="percent">%</button>
+                 <button class="btn btn-operator" data-action="divide">÷</button>
+                 <button class="btn btn-operator" data-action="multiply">×</button>
+
+                 <button class="btn" data-action="number">7</button>
+                 <button class="btn" data-action="number">8</button>
+                 <button class="btn" data-action="number">9</button>
+                 <button class="btn" data-action="subtract">-</button>
+                 <button class="btn" data-action="add">+</button>
+
+                 <button class="btn" data-action="number">4</button>
+                 <button class="btn" data-action="number">5</button>
+                 <button class="btn" data-action="number">6</button>
+                 <button class="btn btn-equals col-span-2 row-span-2" data-action="equals">=</button>
+                 
+                 <button class="btn" data-action="number">1</button>
+                 <button class="btn" data-action="number">2</button>
+                 <button class="btn" data-action="number">3</button>
+
+                 <button class="btn col-span-2" data-action="number">0</button>
+                 <button class="btn" data-action="decimal">.</button>
+                 <button class="btn btn-special" data-action="negate">±</button>
+            </div>
+
+            <!-- Binary Mode Buttons -->
+            <div id="binary-buttons" class="contents hidden">
+                <button class="btn col-span-2 h-12" data-action="bin-to-dec">BIN → DEC</button>
+                <button class="btn col-span-2 h-12" data-action="dec-to-bin">DEC → BIN</button>
+
+                <button class="btn" data-action="number">7</button>
+                <button class="btn" data-action="number">8</button>
+                <button class="btn" data-action="number">9</button>
+                <button class="btn btn-operator" data-action="divide-bin">÷</button>
+
+                <button class="btn" data-action="number">4</button>
+                <button class="btn" data-action="number">5</button>
+                <button class="btn" data-action="number">6</button>
+                <button class="btn btn-operator" data-action="multiply-bin">×</button>
+
+                <button class="btn" data-action="number">1</button>
+                <button class="btn" data-action="number">2</button>
+                <button class="btn" data-action="number">3</button>
+                <button class="btn btn-operator" data-action="subtract-bin">-</button>
+                
+                <button class="btn" data-action="number">0</button>
+                <button class="btn" data-action="decimal">.</button>
+                <button class="btn btn-operator" data-action="add-bin">+</button>
+                <button class="btn btn-equals" data-action="equals-bin">=</button>
+                
+                <button class="btn h-12 col-span-2" data-action="clear-bin">AC</button>
+                <button class="btn h-12 col-span-2" data-action="delete-bin">DEL</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentOperandEl = document.getElementById('current-operand');
+            const previousOperandEl = document.getElementById('previous-operand');
+            const buttonsContainer = document.getElementById('buttons-container');
+            const modeToggle = document.getElementById('mode-toggle');
+            const decimalButtons = document.getElementById('decimal-buttons');
+            const binaryButtons = document.getElementById('binary-buttons');
+            const decLabel = document.getElementById('dec-label');
+            const binLabel = document.getElementById('bin-label');
+            const degRadBtn = document.querySelector('[data-action="deg-rad"]');
+
+            let currentInput = '0';
+            let previousInput = '';
+            let operation = undefined;
+            let expression = '';
+            let isBinaryMode = false;
+            let isInverse = false;
+            let angleMode = 'RAD'; // RAD or DEG
+
+            const updateDisplay = () => {
+                currentOperandEl.textContent = formatDisplayNumber(currentInput);
+                if (operation != null) {
+                    previousOperandEl.textContent = `${formatDisplayNumber(previousInput)} ${operation}`;
+                } else {
+                    previousOperandEl.textContent = '';
+                }
+            };
+            
+            const formatDisplayNumber = (number) => {
+                if (number === null || number === undefined) return '';
+                const stringNumber = number.toString();
+                if (stringNumber.length > 15 && !isBinaryMode) {
+                    return parseFloat(stringNumber).toExponential(9);
+                }
+                return stringNumber;
+            }
+
+            const handleNumber = (number) => {
+                if (currentInput === '0' || currentInput === 'Error') currentInput = '';
+                // In binary mode, if the input is not a binary digit, we assume it's for conversion.
+                // But we still build the string. The user needs to press DEC->BIN.
+                currentInput += number;
+            };
+
+            const handleOperation = (op) => {
+                if (currentInput === '' && previousInput !== '') {
+                    operation = op;
+                    updateDisplay();
+                    return;
+                }
+                if (previousInput !== '') {
+                    calculate();
+                }
+                operation = op;
+                previousInput = currentInput;
+                currentInput = '';
+            };
+
+            const calculate = () => {
+                let result;
+                const prev = parseFloat(previousInput);
+                const current = parseFloat(currentInput);
+                if (isNaN(prev) || isNaN(current)) return;
+                
+                switch (operation) {
+                    case '+': result = prev + current; break;
+                    case '-': result = prev - current; break;
+                    case '×': result = prev * current; break;
+                    case '÷': result = prev / current; break;
+                    case 'xʸ': result = Math.pow(prev, current); break;
+                    default: return;
+                }
+                currentInput = result.toString();
+                operation = undefined;
+                previousInput = '';
+            };
+
+            const evaluateExpression = (expr) => {
+                try {
+                    let safeExpr = expr.replace(/×/g, '*').replace(/÷/g, '/').replace(/π/g, 'Math.PI').replace(/e/g, 'Math.E');
+                    safeExpr = safeExpr.replace(/(\d+(\.\d+)?)%/g, '($1/100)');
+                    return new Function('return ' + safeExpr)();
+                } catch (error) { console.error("Evaluation Error:", error); return 'Error'; }
+            };
+            
+            const clear = () => {
+                currentInput = '0';
+                previousInput = '';
+                operation = undefined;
+                expression = '';
+                updateDisplay();
+            };
+
+            const deleteLast = () => {
+                if (currentInput === 'Error') { clear(); return; }
+                currentInput = currentInput.toString().slice(0, -1);
+                if (currentInput === '') { currentInput = '0'; }
+            };
+            
+            const handleScientific = (func) => {
+                if (currentInput === 'Error') return;
+                let value = parseFloat(currentInput);
+                let result;
+                const toRadians = (deg) => deg * (Math.PI / 180);
+                const toDegrees = (rad) => rad * (180 / Math.PI);
+                let angleValue = angleMode === 'DEG' ? toRadians(value) : value;
+
+                switch(func) {
+                    case 'sin': result = isInverse ? toDegrees(Math.asin(value)) : Math.sin(angleValue); break;
+                    case 'cos': result = isInverse ? toDegrees(Math.acos(value)) : Math.cos(angleValue); break;
+                    case 'tan': result = isInverse ? toDegrees(Math.atan(value)) : Math.tan(angleValue); break;
+                    case 'ln': result = isInverse ? Math.exp(value) : Math.log(value); break;
+                    case 'log': result = isInverse ? Math.pow(10, value) : Math.log10(value); break;
+                    case 'sqrt': result = isInverse ? value * value : Math.sqrt(value); break;
+                    case 'power-2': result = Math.pow(value, 2); break;
+                    case 'negate': result = value * -1; break;
+                    case 'factorial':
+                        if (value < 0 || !Number.isInteger(value)) result = 'Error';
+                        else { let fact = 1; for (let i = 2; i <= value; i++) fact *= i; result = fact; }
+                        break;
+                }
+                
+                if (result === 'Error' || isNaN(result) || !isFinite(result)) currentInput = 'Error';
+                else currentInput = result.toString();
+                resetInverse();
+            };
+
+            const resetInverse = () => {
+                isInverse = false;
+                document.querySelector('[data-action="inv"]').classList.remove('bg-teal-500', 'text-black');
+                document.querySelector('[data-action="sin"]').textContent = 'sin';
+                document.querySelector('[data-action="cos"]').textContent = 'cos';
+                document.querySelector('[data-action="tan"]').textContent = 'tan';
+                document.querySelector('[data-action="ln"]').textContent = 'ln';
+                document.querySelector('[data-action="log"]').textContent = 'log';
+                document.querySelector('[data-action="sqrt"]').textContent = '√';
+            };
+
+            const decToBin = (dec) => {
+                if (isNaN(dec)) return 'Error';
+                const num = parseFloat(dec);
+                const integerPart = Math.floor(Math.abs(num));
+                let fractionalPart = Math.abs(num) - integerPart;
+                let binaryInteger = integerPart.toString(2);
+                let binaryFractional = '';
+                if (fractionalPart > 0) {
+                    binaryFractional = '.';
+                    const precision = 15; let count = 0;
+                    while (fractionalPart > 0 && count < precision) {
+                        fractionalPart *= 2;
+                        if (fractionalPart >= 1) { binaryFractional += '1'; fractionalPart -= 1; } 
+                        else { binaryFractional += '0'; }
+                        count++;
+                    }
+                }
+                return (num < 0 ? '-' : '') + binaryInteger + binaryFractional;
+            };
+
+            const binToDec = (bin) => {
+                if (typeof bin !== 'string' || !/^[01.-]+$/.test(bin)) return 'Error';
+                const parts = bin.split('.');
+                const integerPart = parts[0];
+                const fractionalPart = parts[1] || '';
+                let decimalValue = 0;
+                if (integerPart) { decimalValue += parseInt(integerPart, 2); }
+                if (fractionalPart) {
+                    for (let i = 0; i < fractionalPart.length; i++) {
+                        if (fractionalPart[i] === '1') decimalValue += Math.pow(2, -(i + 1));
+                    }
+                }
+                return decimalValue.toString();
+            };
+            
+            const handleBinaryOperation = (op) => {
+                operation = op;
+                previousInput = currentInput;
+                currentInput = '0';
+            }
+
+            const calculateBinary = () => {
+                if (!previousInput || !currentInput) return;
+                const prevDec = parseFloat(binToDec(previousInput));
+                const currentDec = parseFloat(binToDec(currentInput));
+                let resultDec;
+                switch(operation) {
+                    case '+': resultDec = prevDec + currentDec; break;
+                    case '-': resultDec = prevDec - currentDec; break;
+                    case '×': resultDec = prevDec * currentDec; break;
+                    case '÷': 
+                        if (currentDec === 0) { currentInput = 'Error'; return; }
+                        resultDec = prevDec / currentDec;
+                        break;
+                    default: return;
+                }
+                currentInput = decToBin(resultDec);
+                operation = undefined;
+                previousInput = '';
+            }
+
+            buttonsContainer.addEventListener('click', (e) => {
+                if (!e.target.matches('button')) return;
+
+                const button = e.target;
+                const action = button.dataset.action;
+                const displayedNum = button.textContent;
+                
+                if (isBinaryMode) {
+                     switch(action) {
+                        case 'number':
+                        case 'decimal':
+                             handleNumber(action === 'decimal' ? '.' : displayedNum);
+                             break;
+                        case 'add-bin': handleBinaryOperation('+'); break;
+                        case 'subtract-bin': handleBinaryOperation('-'); break;
+                        case 'multiply-bin': handleBinaryOperation('×'); break;
+                        case 'divide-bin': handleBinaryOperation('÷'); break;
+                        case 'equals-bin': calculateBinary(); break;
+                        case 'clear-bin': clear(); break;
+                        case 'delete-bin': deleteLast(); break;
+                        case 'bin-to-dec':
+                            if (currentInput !== 'Error' && currentInput !== '0') currentInput = binToDec(currentInput);
+                            break;
+                        case 'dec-to-bin':
+                             if (currentInput !== 'Error' && currentInput !== '0') currentInput = decToBin(currentInput);
+                            break;
+                    }
+                } else {
+                    switch (action) {
+                        case 'number': handleNumber(displayedNum); expression += displayedNum; break;
+                        case 'decimal':
+                            if (!currentInput.includes('.')) { currentInput += '.'; expression += '.'; }
+                            break;
+                        case 'add': expression += '+'; handleOperation('+'); break;
+                        case 'subtract': expression += '-'; handleOperation('-'); break;
+                        case 'multiply': expression += '×'; handleOperation('×'); break;
+                        case 'divide': expression += '÷'; handleOperation('÷'); break;
+                        case 'power-y': expression += '**'; handleOperation('xʸ'); break;
+                        case 'equals':
+                            if (expression.includes('(') || expression.includes(')')) {
+                                let result = evaluateExpression(expression);
+                                currentInput = result.toString();
+                                expression = currentInput;
+                            } else if (operation) {
+                                calculate();
+                                expression = currentInput;
+                            }
+                            operation = undefined; previousInput = '';
+                            break;
+                        case 'clear': clear(); break;
+                        case 'delete': deleteLast(); if(expression.length > 0) expression = expression.slice(0, -1); break;
+                        case 'percent': currentInput = (parseFloat(currentInput) / 100).toString(); expression += '/100'; break;
+                        case 'pi': currentInput = Math.PI.toString(); expression += 'π'; break;
+                        case 'e': currentInput = Math.E.toString(); expression += 'e'; break;
+                        case 'open-parenthesis': expression += '('; currentInput = expression; break;
+                        case 'close-parenthesis': expression += ')'; currentInput = expression; break;
+                        case 'sin': case 'cos': case 'tan': case 'ln': case 'log': case 'sqrt': case 'power-2': case 'negate': case 'factorial':
+                            handleScientific(action); expression = currentInput; break;
+                        case 'inv':
+                            isInverse = !isInverse; button.classList.toggle('bg-teal-500'); button.classList.toggle('text-black');
+                            document.querySelector('[data-action="sin"]').textContent = isInverse ? 'sin⁻¹' : 'sin';
+                            document.querySelector('[data-action="cos"]').textContent = isInverse ? 'cos⁻¹' : 'cos';
+                            document.querySelector('[data-action="tan"]').textContent = isInverse ? 'tan⁻¹' : 'tan';
+                            document.querySelector('[data-action="ln"]').textContent = isInverse ? 'eˣ' : 'ln';
+                            document.querySelector('[data-action="log"]').textContent = isInverse ? '10ˣ' : 'log';
+                            document.querySelector('[data-action="sqrt"]').textContent = isInverse ? 'x²' : '√';
+                            break;
+                        case 'deg-rad':
+                            angleMode = angleMode === 'RAD' ? 'DEG' : 'RAD';
+                            degRadBtn.textContent = angleMode; break;
+                    }
+                }
+                updateDisplay();
+            });
+
+            modeToggle.addEventListener('change', () => {
+                isBinaryMode = modeToggle.checked;
+                clear();
+                if (isBinaryMode) {
+                    buttonsContainer.classList.remove('grid-cols-5');
+                    buttonsContainer.classList.add('grid-cols-4');
+                    decimalButtons.classList.add('hidden');
+                    binaryButtons.classList.remove('hidden');
+                    binLabel.classList.remove('opacity-50'); binLabel.classList.add('font-bold', 'text-white');
+                    decLabel.classList.add('opacity-50'); decLabel.classList.remove('font-bold', 'text-white');
+                } else {
+                    buttonsContainer.classList.remove('grid-cols-4');
+                    buttonsContainer.classList.add('grid-cols-5');
+                    decimalButtons.classList.remove('hidden');
+                    binaryButtons.classList.add('hidden');
+                    decLabel.classList.remove('opacity-50'); decLabel.classList.add('font-bold', 'text-white');
+                    binLabel.classList.add('opacity-50'); binLabel.classList.remove('font-bold', 'text-white');
+                }
+            });
+            updateDisplay();
+        });
+    </script>
+</body>
+</html>
+
